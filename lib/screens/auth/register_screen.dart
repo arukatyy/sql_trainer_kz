@@ -15,7 +15,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
   String? _errorMessage;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  bool get _hasMinLength => _passwordController.text.length >= 6;
+  bool get _hasNumber => RegExp(r'[0-9]').hasMatch(_passwordController.text);
+  bool get _hasSymbol => RegExp(r'[^\p{L}\p{N}\s]', unicode: true).hasMatch(_passwordController.text);
 
   void _register() async {
     setState(() {
@@ -30,6 +43,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
         _errorMessage = 'Барлық өрістерді толтырыңыз';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (!email.contains('@') || !email.contains('.')) {
+      setState(() {
+        _errorMessage = 'Электрондық пошта пішімі қате (мысалы: name@mail.com)';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      setState(() {
+        _errorMessage = 'Құпиясөз кемінде 6 таңбадан тұруы керек';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      setState(() {
+        _errorMessage = 'Құпиясөзде кемінде бір сан (0-9) болуы керек';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (!RegExp(r'[^\p{L}\p{N}\s]', unicode: true).hasMatch(password)) {
+      setState(() {
+        _errorMessage = 'Құпиясөзде кемінде бір арнайы символ (!@#\$_ т.б.) болуы керек';
         _isLoading = false;
       });
       return;
@@ -51,10 +96,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Тіркелу қатесі';
+        _errorMessage = 'Бұл электрондық пошта тіркелген немесе тіркелу қатесі';
         _isLoading = false;
       });
     }
+  }
+
+  Widget _buildPasswordRequirements() {
+    final allMet = _hasMinLength && _hasNumber && _hasSymbol;
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: allMet
+              ? const Color(0xFF10B981).withValues(alpha: 0.5)
+              : Colors.white12,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Құпиясөз талаптары:',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildRequirementRow('Кемінде 6 таңба', _hasMinLength),
+          const SizedBox(height: 4),
+          _buildRequirementRow('Кемінде 1 сан (0-9)', _hasNumber),
+          const SizedBox(height: 4),
+          _buildRequirementRow('Кемінде 1 арнайы символ (!, @, #, \$, _ т.б.)', _hasSymbol),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRequirementRow(String text, bool isMet) {
+    final color = isMet ? const Color(0xFF10B981) : Colors.white38;
+    return Row(
+      children: [
+        Icon(
+          isMet ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+          size: 16,
+          color: color,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            color: color,
+            fontWeight: isMet ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -114,15 +217,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
+                obscureText: !_isPasswordVisible,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   labelText: 'Құпиясөз',
                   filled: true,
                   fillColor: Theme.of(context).cardColor,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.white54,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
               ),
+              _buildPasswordRequirements(),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _isLoading ? null : _register,

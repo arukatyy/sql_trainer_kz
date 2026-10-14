@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
   String? _errorMessage;
 
   void _login() async {
@@ -121,14 +122,25 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
+                obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
                   labelText: 'Құпиясөз',
                   filled: true,
                   fillColor: Theme.of(context).cardColor,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.white54,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
               ),
               const SizedBox(height: 24),
               ElevatedButton(

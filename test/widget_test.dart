@@ -10,7 +10,7 @@ import 'package:sql_trainer_kz/core/localization/translator.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'hasSeenOnboarding': true});
     final storageService = StorageService();
 
     await tester.pumpWidget(
@@ -26,6 +26,7 @@ void main() {
     );
 
     // Allow splash timer to complete
+    await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
     expect(find.text('SQL Тренажері'), findsAtLeastNWidgets(1));
   });

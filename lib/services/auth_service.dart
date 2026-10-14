@@ -30,6 +30,13 @@ class AuthService {
     final cleanPassword = password.trim();
     final cleanName = name.trim();
 
+    // Password policy: minimum 6 characters, at least 1 digit, at least 1 symbol
+    if (cleanPassword.length < 6 ||
+        !RegExp(r'[0-9]').hasMatch(cleanPassword) ||
+        !RegExp(r'[^\p{L}\p{N}\s]', unicode: true).hasMatch(cleanPassword)) {
+      return false;
+    }
+
     // 1. Try to register directly in SQLite sql_trainer.db
     final dbRegistered = await DbHelper.registerUser(
       name: cleanName,
